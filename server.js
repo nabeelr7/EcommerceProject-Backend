@@ -70,5 +70,9 @@ app.post("/addItem", (req, res) => {
     res.send(JSON.stringify({success: true}))
 })
 
+app.get("/getAllItems", (req, res) => {
+    res.send(JSON.stringify(itemDescriptions))
+})
+
 
 app.listen(4030, function () { console.log("Server started on port 4030") })
