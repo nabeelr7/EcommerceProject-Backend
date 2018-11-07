@@ -28,10 +28,10 @@ app.post("/signup", (req, res) => {
             } else {
                 dbo.collection("accounts").insertOne(parsed, (err, result) => {
                     if (err) throw err
-                    console.log("success")
                     let sessionID = genID()
                     sessions[sessionID] = parsed.username
                     res.set('Set-Cookie', sessionID)
+                    console.log("success")
                     res.send(JSON.stringify(
                         { success: true }
                     ))
@@ -50,10 +50,10 @@ app.post("/login", (req, res) => {
         dbo.collection("accounts").findOne({ username: parsed.username }, (err, result) => {
             if (err) throw err
             if (result.password === parsed.password) {
-                console.log("logged in")
                 let sessionID = genID()
                 sessions[sessionID] = parsed.username
                 res.set('Set-Cookie', sessionID)
+                console.log("logged in")
                 res.send(JSON.stringify(
                     { success: true }
                 ))
@@ -63,6 +63,7 @@ app.post("/login", (req, res) => {
                 ))
                 return
             }
+            db.close()
         })
     })})
 
@@ -89,7 +90,11 @@ app.post("/addItem", (req, res) => {
     MongoClient.connect(url, { useNewUrlParser: true }, (err, db) => {
         if (err) throw err
         let dbo = db.db("my-database")
-        dbo.collection("accounts").updateOne()
+        dbo.collection("accounts").updateOne({username: newItem.username}, {$set:{items: newItem.itemID}}, (err, res) => {
+            if (err) throw err
+            console.log("Users Items Updated")
+        })
+        db.close()
     })    
     res.send(JSON.stringify({ success: true }))
 })
