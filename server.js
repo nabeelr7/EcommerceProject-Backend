@@ -64,7 +64,7 @@ app.post("/login", (req, res) => {
                 return
             }
         })
-    }})
+    })})
 
 app.post("/addItem", (req, res) => {
     let parsed = JSON.parse(req.body)
