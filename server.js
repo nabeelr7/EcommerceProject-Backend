@@ -70,6 +70,7 @@ app.post("/login", (req, res) => {
 app.post("/addItem", (req, res) => {
     let parsed = JSON.parse(req.body)
     let itemID = genID()
+    let sessionID = req.headers.cookie
     let newItem = {
         title: parsed.title,
         description: parsed.description,
