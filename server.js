@@ -14,6 +14,7 @@ const genID = () => { return Math.floor(Math.random() * 10000000000) }
 
 app.post("/signup", (req, res) => {
     let parsed = JSON.parse(req.body)
+    parsed.items = []
     MongoClient.connect(url, { useNewUrlParser: true }, function (err, db) {
         if (err) throw err;
         let dbo = db.db("my-database")
@@ -21,7 +22,7 @@ app.post("/signup", (req, res) => {
             if (err) throw err
             if (result) {
                 res.send(JSON.stringify(
-                    { "success": "false" }
+                    { success: false }
                 ))
                 return
             } else {
@@ -32,7 +33,7 @@ app.post("/signup", (req, res) => {
                     sessions[sessionID] = parsed.username
                     res.set('Set-Cookie', sessionID)
                     res.send(JSON.stringify(
-                        { "success": "true" }
+                        { success: true }
                     ))
                 })
             }
@@ -43,42 +44,53 @@ app.post("/signup", (req, res) => {
 
 app.post("/login", (req, res) => {
     let parsed = JSON.parse(req.body)
-    let username = parsed.username
-    let password = parsed.password
-
-    if (passwords[username] !== password) {
-        res.send(JSON.stringify(
-            { "success": "false" }
-        ))
-        return
-    }
-
-    let sessionID = genID()
-    sessions[username] = sessionID
-
-    res.send(JSON.stringify(
-        { "success": "true" }
-    ))
-})
+    MongoClient.connect(url, { useNewUrlParser: true }, function (err, db) {
+        if (err) throw err
+        let dbo = db.db("my-database")
+        dbo.collection("accounts").findOne({ username: parsed.username }, (err, result) => {
+            if (err) throw err
+            if (result.password === parsed.password) {
+                console.log("logged in")
+                let sessionID = genID()
+                sessions[sessionID] = parsed.username
+                res.set('Set-Cookie', sessionID)
+                res.send(JSON.stringify(
+                    { success: true }
+                ))
+            } else {
+                res.send(JSON.stringify(
+                    { success: false }
+                ))
+                return
+            }
+        })
+    }})
 
 app.post("/addItem", (req, res) => {
     let parsed = JSON.parse(req.body)
-    let title = parsed.title
-    let price = parsed.price
-    let description = parsed.description
-    let category = parsed.category
     let itemID = genID()
-    itemDescriptions[itemID] = {
-        title: title,
-        description: description,
-        category: category,
-        price: price
+    let newItem = {
+        title: parsed.title,
+        description: parsed.description,
+        category: parsed.category,
+        price: parsed.price,
+        username: sessions[sessionID],
+        itemID: itemID
     }
-    let username = sessions[sessionID]
-    if (usersItems[username] === undefined) {
-        usersItems[username] = []
-    }
-    usersItems[username] = usersItems[username].concat(itemID)
+    MongoClient.connect(url, { useNewUrlParser: true }, (err, db) => {
+        if (err) throw err
+        let dbo = db.db("my-database")
+        dbo.collection("items").insertOne(newItem, (err, result) => {
+            if (err) throw err
+            console.log("item added")
+        })
+    })
+
+    MongoClient.connect(url, { useNewUrlParser: true }, (err, db) => {
+        if (err) throw err
+        let dbo = db.db("my-database")
+        dbo.collection("accounts").updateOne()
+    })    
     res.send(JSON.stringify({ success: true }))
 })
 
