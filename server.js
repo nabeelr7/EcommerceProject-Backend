@@ -95,14 +95,38 @@ app.post("/addItem", (req, res) => {
             if (err) throw err
             console.log("Users Items Updated")
         })
-        db.close()
     })    
     res.send(JSON.stringify({ success: true }))
+    db.close()
 })
 
 app.get("/getAllItems", (req, res) => {
+    MongoClient.connect(url, { useNewUrlParser:true }, (err, db) => {
+        if (err) throw err
+        let dbo = db.db("my-database")
+        dbo.collection("items").find({}).toArray((err, result) => {
+            if (err) throw err
+            
+        })
+    })
     res.send(JSON.stringify(itemDescriptions))
 })
 
+app.post("/search", (req, res) => {
+    let parsed = JSON.parse(req.body)
+    let query = parsed.query
+    MongoClient.connect(url, { useNewUrlParser:true }, (err, db) => {
+        if (err) throw err
+        let dbo = db.db("my-database")
+        dbo.collection("items").find().toArray((err, result) => {
+            if (err) throw err
+            let filtered = result.filter(function(item){
+                return item.title.includes(query)
+              })
+            res.send(JSON.stringify(filtered))
+            db.close()
+        })
+    })
+})
 
 app.listen(4030, function () { console.log("Server started on port 4030") })
