@@ -48,6 +48,12 @@ app.post("/login", (req, res) => {
         if (err) throw err
         let dbo = db.db("my-database")
         dbo.collection("accounts").findOne({ username: parsed.username }, (err, result) => {
+            if (result === null) {
+                res.send(JSON.stringify(
+                    { success: false }
+                ))
+                return
+            }
             if (err) throw err
             if (result.password === parsed.password) {
                 let sessionID = genID()
@@ -57,12 +63,7 @@ app.post("/login", (req, res) => {
                 res.send(JSON.stringify(
                     { success: true }
                 ))
-            } else {
-                res.send(JSON.stringify(
-                    { success: false }
-                ))
-                return
-            }
+            } 
             db.close()
         })
     })})
@@ -91,7 +92,7 @@ app.post("/addItem", (req, res) => {
     MongoClient.connect(url, { useNewUrlParser: true }, (err, db) => {
         if (err) throw err
         let dbo = db.db("my-database")
-        dbo.collection("accounts").updateOne({username: newItem.username}, {$set:{items: newItem.itemID}}, (err, res) => {
+        dbo.collection("accounts").updateOne({username: newItem.username}, {$push:{items: newItem.itemID}}, (err, res) => {
             if (err) throw err
             console.log("Users Items Updated")
         })
@@ -131,16 +132,14 @@ app.post("/search", (req, res) => {
 
 app.post("/getItemsByCategory", (req, res) => {
     let parsed = JSON.parse(req.body)
-    let categoryName = parsed.categoryType
+    console.log(parsed)
+    let categoryName = parsed.category
     MongoClient.connect(url, {useNewUrlParser: true}, (err, db) => {
         if (err) throw err
         let dbo = db.db("my-database")
-        dbo.collection("items").find().toArray((err, result) => {
+        dbo.collection("items").find({category: categoryName}).toArray((err, result) => {
             if (err) throw err
-            let filtered = result.filter(function(item){
-                return item.category.includes(categoryName)
-            })
-            res.send(JSON.stringify(filtered))
+            res.send(JSON.stringify(result))
             db.close()
         })
     })
