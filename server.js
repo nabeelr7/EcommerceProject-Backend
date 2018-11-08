@@ -73,7 +73,7 @@ app.post("/addItem", (req, res) => {
     let itemID = genID()
     let sessionID = req.headers.cookie
     let newItem = {
-        title: parsed.title,
+        title: parsed.title.toLowerCase(),
         description: parsed.description,
         category: parsed.category,
         price: parsed.price,
@@ -107,15 +107,15 @@ app.get("/getAllItems", (req, res) => {
         let dbo = db.db("my-database")
         dbo.collection("items").find({}).toArray((err, result) => {
             if (err) throw err
-            
+            res.send(JSON.stringify(result))
+            db.close()
         })
     })
-    res.send(JSON.stringify(itemDescriptions))
 })
 
 app.post("/search", (req, res) => {
     let parsed = JSON.parse(req.body)
-    let query = parsed.query
+    let query = parsed.query.toLowerCase()
     MongoClient.connect(url, { useNewUrlParser:true }, (err, db) => {
         if (err) throw err
         let dbo = db.db("my-database")
