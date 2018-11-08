@@ -4,16 +4,17 @@ let bodyParser = require('body-parser')
 const MongoClient = require("mongodb").MongoClient;
 app.use(bodyParser.raw({ type: '*/*' }))
 const url = "mongodb://admin:password1@ds151753.mlab.com:51753/my-database";
+let sha256 = require("sha256")
 
 
 let sessions = {}
-let usersItems = {}
-let itemDescriptions = {}
+
 
 const genID = () => { return Math.floor(Math.random() * 10000000000) }
 
 app.post("/signup", (req, res) => {
     let parsed = JSON.parse(req.body)
+    parsed.password = sha256(parsed.password)
     parsed.items = []
     MongoClient.connect(url, { useNewUrlParser: true }, function (err, db) {
         if (err) throw err;
@@ -55,7 +56,7 @@ app.post("/login", (req, res) => {
                 return
             }
             if (err) throw err
-            if (result.password === parsed.password) {
+            if (result.password === sha256(parsed.password)) {
                 let sessionID = genID()
                 sessions[sessionID] = parsed.username
                 res.set('Set-Cookie', sessionID)
@@ -78,7 +79,8 @@ app.post("/addItem", (req, res) => {
         category: parsed.category,
         price: parsed.price,
         username: sessions[sessionID],
-        itemID: itemID
+        itemID: itemID,
+        source: parsed.source
     }
     MongoClient.connect(url, { useNewUrlParser: true }, (err, db) => {
         if (err) throw err
@@ -95,10 +97,10 @@ app.post("/addItem", (req, res) => {
         dbo.collection("accounts").updateOne({username: newItem.username}, {$push:{items: newItem.itemID}}, (err, res) => {
             if (err) throw err
             console.log("Users Items Updated")
+            db.close()
         })
     })    
     res.send(JSON.stringify({ success: true }))
-    db.close()
 })
 
 app.get("/getAllItems", (req, res) => {
@@ -141,6 +143,47 @@ app.post("/getItemsByCategory", (req, res) => {
             if (err) throw err
             res.send(JSON.stringify(result))
             db.close()
+        })
+    })
+})
+
+app.post("/getUsersListings", (req, res) => {
+    let parsed = JSON.parse(req.body)
+    let username = parsed.username
+    MongoClient.connect(url, { useNewUrlParser:true }, (err, db) => {
+        if (err) throw err
+        let dbo = db.db("my-database")
+        dbo.collection("items").find({username: username}).toArray((err, result) => {
+            if (err) throw err
+            res.send(JSON.stringify(result))
+            db.close()
+        })
+    })
+})
+
+app.post("/addItemToCart", (req, res) => {
+    let parsed = JSON.parse(req.body)
+    let itemID = parsed.itemId
+    let item;
+    MongoClient.connect(url, { useNewUrlParser:true }, (err, db) => {
+        if (err) throw err
+        let dbo = db.db("my-database")
+        dbo.collection("items").findOne({itemID: itemID}, (err, result) => {
+            if (err) throw err
+            item = result
+        })
+    })
+})
+
+app.post("/getItem", (req, res) => {
+    let parsed = JSON.parse(req.body)
+    let itemID = parsed.itemId
+    MongoClient.connect(url, { useNewUrlParser:true }, (err, db) => {
+        if (err) throw err
+        let dbo = db.db("my-database")
+        dbo.collection("items").findOne({itemID: itemID}, (err, result) => {
+            if (err) throw err
+            res.send(result)
         })
     })
 })
