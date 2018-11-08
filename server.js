@@ -129,4 +129,21 @@ app.post("/search", (req, res) => {
     })
 })
 
+app.post("/getItemsByCategory", (req, res) => {
+    let parsed = JSON.parse(req.body)
+    let categoryName = parsed.categoryType
+    MongoClient.connect(url, {useNewUrlParser: true}, (err, db) => {
+        if (err) throw err
+        let dbo = db.db("my-database")
+        dbo.collection("items").find().toArray((err, result) => {
+            if (err) throw err
+            let filtered = result.filter(function(item){
+                return item.category.includes(categoryName)
+            })
+            res.send(JSON.stringify(filtered))
+            db.close()
+        })
+    })
+})
+
 app.listen(4030, function () { console.log("Server started on port 4030") })
