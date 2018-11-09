@@ -163,12 +163,11 @@ app.post("/getUsersListings", (req, res) => {
 
 app.post("/addToCart", (req, res) => {
     let parsed = JSON.parse(req.body)
-    let itemID = parsed.itemId
     let username = parsed.username
     MongoClient.connect(url, { useNewUrlParser:true }, (err, db) => {
         if (err) throw err
         let dbo = db.db("my-database")
-        dbo.collection("items").findOne({itemID: itemID}, (err, result) => {
+        dbo.collection("items").findOne({itemID: parseInt(parsed.itemID)}, (err, result) => {
             if (err) throw err
             dbo.collection("cart").insertOne({})
         })
