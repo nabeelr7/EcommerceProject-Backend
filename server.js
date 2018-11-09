@@ -3,6 +3,7 @@ let app = express()
 let bodyParser = require('body-parser')
 const MongoClient = require("mongodb").MongoClient;
 let multer = require('multer');
+let upload = multer({ dest: 'uploads/' })
 app.use(bodyParser.raw({ type: 'application/json' }))
 const url = "mongodb://admin:password1@ds151753.mlab.com:51753/my-database";
 let sha256 = require("sha256")
@@ -12,6 +13,11 @@ let sessions = {}
 
 
 const genID = () => { return Math.floor(Math.random() * 10000000000) }
+
+app.post('/profile', upload.single('avatar'), function (req, res, next) {
+    // req.file is the `avatar` file
+    // req.body will hold the text fields, if there were any
+  })
 
 app.post("/signup", (req, res) => {
     let parsed = JSON.parse(req.body)
@@ -26,6 +32,7 @@ app.post("/signup", (req, res) => {
                 res.send(JSON.stringify(
                     { success: false }
                 ))
+                db.close()
                 return
             } else {
                 dbo.collection("accounts").insertOne(parsed, (err, result) => {
@@ -34,12 +41,16 @@ app.post("/signup", (req, res) => {
                     sessions[sessionID] = parsed.username
                     res.set('Set-Cookie', sessionID)
                     console.log("success")
+                    dbo.collection("cart").insertOne({username: parsed.username}, (err, result) => {
+                        if (err) throw err
+                        console.log("cart created")
+                    })
                     res.send(JSON.stringify(
                         { success: true }
-                    ))
+                        ))
+                        db.close()
                 })
             }
-            db.close()
         })
     })
 })
@@ -54,6 +65,7 @@ app.post("/login", (req, res) => {
                 res.send(JSON.stringify(
                     { success: false }
                 ))
+                db.close()
                 return
             }
             if (err) throw err
@@ -65,8 +77,8 @@ app.post("/login", (req, res) => {
                 res.send(JSON.stringify(
                     { success: true }
                 ))
+                db.close()
             } 
-            db.close()
         })
     })})
 
@@ -98,10 +110,10 @@ app.post("/addItem", (req, res) => {
         dbo.collection("accounts").updateOne({username: newItem.username}, {$push:{items: newItem.itemID}}, (err, res) => {
             if (err) throw err
             console.log("Users Items Updated")
-            db.close()
         })
     })    
     res.send(JSON.stringify({ success: true }))
+    db.close()
 })
 
 app.get("/getAllItems", (req, res) => {
@@ -170,7 +182,27 @@ app.post("/addToCart", (req, res) => {
         let dbo = db.db("my-database")
         dbo.collection("items").findOne({itemID: parseInt(parsed.itemID)}, (err, result) => {
             if (err) throw err
-            dbo.collection("cart").insertOne({})
+            console.log(result)
+            
+            dbo.collection("cart").updateOne({username: username},{$push:{cart: result}}, (err, result) => {
+                if (err) throw err
+                res.send({success: true})
+                db.close()
+            })
+        })
+    })
+})
+
+app.post("/getCart", (req, res) => {
+    let parsed = JSON.parse(req.body)
+    let username = parsed.username
+    MongoClient.connect(url, { useNewUrlParser:true }, (err, db) => {
+        if (err) throw err
+        let dbo = db.db("my-database")
+        dbo.collection("cart").find({username: username}).toArray((err, result) => {
+            if (err) throw err
+            res.send(JSON.stringify(result))
+            db.close()
         })
     })
 })
@@ -187,5 +219,7 @@ app.post("/getItem", (req, res) => {
         })
     })
 })
+
+
 
 app.listen(4030, function () { console.log("Server started on port 4030") })
