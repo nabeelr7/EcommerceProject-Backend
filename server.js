@@ -147,7 +147,6 @@ app.post("/search", (req, res) => {
 
 app.post("/getItemsByCategory", (req, res) => {
     let parsed = JSON.parse(req.body)
-    console.log(parsed)
     let categoryName = parsed.category
     MongoClient.connect(url, {useNewUrlParser: true}, (err, db) => {
         if (err) throw err
@@ -162,14 +161,12 @@ app.post("/getItemsByCategory", (req, res) => {
 
 app.post("/getUsersListings", (req, res) => {
     let parsed = JSON.parse(req.body)
-    console.log("received from client "+parsed)
     let username = parsed.username
     MongoClient.connect(url, { useNewUrlParser:true }, (err, db) => {
         if (err) throw err
         let dbo = db.db("my-database")
         dbo.collection("items").find({username: username}).toArray((err, result) => {
             if (err) throw err
-            console.log('result sent'+ result)
             res.send(JSON.stringify(result))
             db.close()
         })
@@ -184,8 +181,6 @@ app.post("/addToCart", (req, res) => {
         let dbo = db.db("my-database")
         dbo.collection("items").findOne({itemID: parseInt(parsed.itemId)}, (err, result) => {
             if (err) throw err
-            console.log(result)
-            
             dbo.collection("cart").updateOne({username: username},{$push:{cart: result}}, (err, result) => {
                 if (err) throw err
                 res.send({success: true})
@@ -218,7 +213,9 @@ app.post("/getCart", (req, res) => {
         let dbo = db.db("my-database")
         dbo.collection("cart").find({username: username}).toArray((err, result) => {
             if (err) throw err
-            res.send(JSON.stringify(result))
+            let sent = result[0].cart
+            
+            res.send(JSON.stringify(sent))
             db.close()
         })
     })
