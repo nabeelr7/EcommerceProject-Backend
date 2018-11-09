@@ -195,15 +195,20 @@ app.post("/addToCart", (req, res) => {
     })
 })
 
-// app.post("/removeFromCart", (req, res) => {
-//     let parsed = JSON.parse(req.body)
-//     let username = parsed.username
-//     MongoClient.connect(url, { useNewUrlParser:true }, (err, db) => {
-//         if (err) throw err
-//         let dbo = db.db("my-database")
-//         dbo.collection("cart").
-//     })
-// })
+app.post("/removeFromCart", (req, res) => {
+    let parsed = JSON.parse(req.body)
+    let username = parsed.username
+    let itemID = parsed.itemId
+    MongoClient.connect(url, { useNewUrlParser:true }, (err, db) => {
+        if (err) throw err
+        let dbo = db.db("my-database")
+        dbo.collection("cart").updateOne({username: username},{$pull:{cart:{ itemID:parseInt(itemID)}}}, (err, result) => {
+            if (err) throw err
+            res.send({success:true})
+            db.close()
+        })
+    })
+})
 
 app.post("/getCart", (req, res) => {
     let parsed = JSON.parse(req.body)
