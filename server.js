@@ -2,7 +2,7 @@ let express = require('express')
 let app = express()
 let bodyParser = require('body-parser')
 const MongoClient = require("mongodb").MongoClient;
-app.use(bodyParser.raw({ type: '*/*' }))
+app.use(bodyParser.raw({ type: 'application/json' }))
 const url = "mongodb://admin:password1@ds151753.mlab.com:51753/my-database";
 let sha256 = require("sha256")
 
