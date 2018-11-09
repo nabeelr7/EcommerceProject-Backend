@@ -193,6 +193,16 @@ app.post("/addToCart", (req, res) => {
     })
 })
 
+app.post("/removeFromCart", (req, res) => {
+    let parsed = JSON.parse(req.body)
+    let username = parsed.username
+    MongoClient.connect(url, { useNewUrlParser:true }, (err, db) => {
+        if (err) throw err
+        let dbo = db.db("my-database")
+        dbo.collection("cart").
+    })
+})
+
 app.post("/getCart", (req, res) => {
     let parsed = JSON.parse(req.body)
     let username = parsed.username
