@@ -15,8 +15,7 @@ let sessions = {}
 const genID = () => { return Math.floor(Math.random() * 10000000000) }
 
 app.post('/profile', upload.single('avatar'), function (req, res, next) {
-    // req.file is the `avatar` file
-    // req.body will hold the text fields, if there were any
+   console.log(req.file)
   })
 
 app.post("/signup", (req, res) => {
@@ -197,7 +196,7 @@ app.post("/removeFromCart", (req, res) => {
     MongoClient.connect(url, { useNewUrlParser:true }, (err, db) => {
         if (err) throw err
         let dbo = db.db("my-database")
-        dbo.collection("cart").updateOne({username: username},{$pull:{cart:{ itemID:parseInt(itemID)}}}, (err, result) => {
+        dbo.collection("cart").update({username: username},{$pull:{cart:{ itemID:parseInt(itemID)}}}, (err, result) => {
             if (err) throw err
             res.send({success:true})
             db.close()
