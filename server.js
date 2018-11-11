@@ -86,7 +86,7 @@ app.post("/addItem", (req, res) => {
     let itemID = genID()
     let sessionID = req.headers.cookie
     let newItem = {
-        title: parsed.title.toLowerCase(),
+        title: parsed.title,
         description: parsed.description,
         category: parsed.category,
         price: parsed.price,
