@@ -90,7 +90,7 @@ app.post("/addItem", (req, res) => {
         description: parsed.description,
         category: parsed.category,
         price: parsed.price,
-        username: sessions[sessionID],
+        username: parsed.username,
         itemID: itemID,
         source: parsed.source
     }
